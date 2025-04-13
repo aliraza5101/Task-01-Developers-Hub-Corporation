@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Financial Sentiment Analyzer</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    :root {
+      --bg-color: #0d0d0d;
+      --card-bg: #1a1a1a;
+      --accent-color: #ff4d4d;
+      --text-color: #ffffff;
+      --btn-gradient: linear-gradient(135deg, #ff4d4d, #ff1a1a);
+    }
+
+    body {
+      font-family: 'Outfit', sans-serif;
+      background: var(--bg-color);
+      color: var(--text-color);
+      transition: 0.3s ease;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      margin: 0;
+      padding-top: 80px; /* 🆕 space for fixed topbar */
+    }
+
+    .topbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  background: var(--card-bg);
+  padding: 22px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 4px 15px rgba(255, 77, 77, 0.1);
+  z-index: 100;
+}
+
+/* 👇 Title thoda left se andar */
+.title {
+  font-size: 38px;
+  font-weight: bold;
+  background: linear-gradient(90deg, #ff4b2b, #ff416c);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin-left: 100px;
+}
+.mid {
+  font-size: 40px;
+  font-weight: bold;
+  background: #EFEFEF;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+/* 👇 Toggle thoda right se andar */
+.toggle {
+  font-size: 16px;
+  background: #393939;
+  padding: 10px 13px;
+  border-radius: 50px;
+  color: var(--text-color);
+  cursor: pointer;
+  transition: 0.3s;
+  margin-right: 130px;
+}
+
+    .toggle:hover {
+      background-color: #ff3b3b;
+      color: #000;
+    }
+
+    .card {
+      transform: scale(0.9);
+      transform-origin: top center;
+      transition: transform 0.3s ease;
+      background: var(--card-bg);
+      padding: 30px 40px;
+      border-radius: 20px;
+      width: 80%;
+      max-width: 750px;
+      box-shadow: 0 0 20px rgba(255, 77, 77, 0.2);
+      box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    h1 {
+      text-align: left;
+      font-size: 45px;
+      font-weight: 900;
+      background: linear-gradient(90deg, #ff4b2b, #ff416c);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 27px;
+    }
+
+    .avatar {
+      margin: 15px auto;
+      padding-bottom: 15px;
+      display: flex;
+      justify-content: center;
+    }
+
+    .avatar img {
+      width: 120px;
+      border-radius: 50%;
+      border: 0px solid var(--accent-color);
+    }
+
+    form {
+      width: 90%;
+    }
+
+    textarea {
+      width: 100%;
+      padding: 15px;
+      font-size: 16px;
+      border-radius: 10px;
+      border: none;
+      resize: none;
+      outline: none;
+      background: rgba(255, 255, 255, 0.08);
+      color: inherit;
+      margin-bottom: 15px;
+      box-sizing: border-box;
+    }
+
+    button {
+      padding: 14px;
+      font-size: 16px;
+      font-weight: bold;
+      background: var(--btn-gradient);
+      border: none;
+      border-radius: 12px;
+      color: #fff;
+      cursor: pointer;
+      box-sizing: border-box;
+      width: 100%;
+    }
+
+    .result {
+      box-sizing: border-box;
+      width: 90%;
+      background: rgba(255, 77, 77, 0.15);
+      border-left: 6px solid var(--accent-color);
+      padding: 13px;
+      border-radius: 12px;
+      color: var(--accent-color);
+      text-align: center;
+      font-size: 17px;
+      margin-top: 15px;
+      margin-bottom: 0;
+    }
+
+    canvas {
+      margin-top: 12px;
+      width: 100%;
+    }
+
+    .footer {
+      text-align: center;
+      margin-top: 25px;
+      font-size: 16px;
+      font-weight: bold;
+      color: #aaa;
+      letter-spacing: 1px;
+    }
+  </style>
+</head>
+<body>
+  <!-- 🆕 Toggle moved to fixed top bar -->
+  <div class="topbar">
+    <div class="title">🧠 Ali Raza</div>
+    <div class="mid">AI/ML Internship</div>
+    <div class="toggle" onclick="toggleMode()">🌗 Toggle Theme</div>
+  </div>
+
+  <div class="card">
+    <h1>🧠 Financial Sentiment Analyzer</h1>
+
+    <div class="avatar">
+      <img src="{{ url_for('static', filename='my_avatar_2.jpg') }}" alt="AI Avatar" />
+    </div>
+
+    <form action="/predict" method="POST">
+      <textarea name="news" rows="5" placeholder="Paste financial headline..."></textarea>
+      <button type="submit">🔍 Analyze</button>
+    </form>
+
+    {% if prediction %}
+      <div class="result">Predicted Sentiment: <strong>{{ prediction }}</strong></div>
+    {% endif %}
+
+    <div class="footer">Developed by Ali Raza ❤️ | BS AI Student</div>
+  </div>
+
+  <script>
+    window.onload = function () {
+      const savedTheme = localStorage.getItem("theme");
+      if (savedTheme === "light") {
+        setLightMode();
+      } else {
+        setDarkMode();
+      }
+    };
+
+    function toggleMode() {
+      const current = localStorage.getItem("theme");
+      if (current === "light") {
+        setDarkMode();
+      } else {
+        setLightMode();
+      }
+    }
+
+    function setLightMode() {
+      document.documentElement.style.setProperty('--bg-color', '#ffffff');
+      document.documentElement.style.setProperty('--text-color', '#000000');
+      localStorage.setItem("theme", "light");
+    }
+
+    function setDarkMode() {
+      document.documentElement.style.setProperty('--bg-color', '#0d0d0d');
+      document.documentElement.style.setProperty('--text-color', '#ffffff');
+      localStorage.setItem("theme", "dark");
+    }
+  </script>
+</body>
+</html>
+
+
